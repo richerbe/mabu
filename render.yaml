@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: mabu
+    env: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: NAVER_CLIENT_ID
+        sync: false
+      - key: NAVER_CLIENT_SECRET
+        sync: false
+      - key: NAVER_SEARCHAD_API_KEY
+        sync: false
+      - key: NAVER_SEARCHAD_SECRET_KEY
+        sync: false
+      - key: NAVER_SEARCHAD_CUSTOMER_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
