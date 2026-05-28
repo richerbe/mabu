@@ -3355,7 +3355,7 @@ body {
 
 .marketing-design-form {
   display: grid;
-  grid-template-columns: minmax(280px, 1.35fr) minmax(220px, 0.75fr) minmax(180px, 0.6fr) auto;
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr) minmax(220px, 0.72fr) minmax(180px, 0.58fr) auto;
   gap: 12px;
   align-items: end;
   padding: 18px;
@@ -3365,9 +3365,32 @@ body {
   box-shadow: var(--mabu-shadow-soft);
 }
 
+.competitor-link-field {
+  align-self: stretch;
+}
+
+.textarea-shell {
+  min-height: 72px;
+  align-items: flex-start;
+  padding-top: 12px;
+  padding-bottom: 10px;
+}
+
+.textarea-shell textarea {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  color: var(--mabu-text);
+  background: transparent;
+  font: inherit;
+  line-height: 1.45;
+  outline: 0;
+  resize: vertical;
+}
+
 .marketing-score-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 1.25fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(260px, 1.15fr) repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -3470,6 +3493,114 @@ body {
   background: #eef3f8;
 }
 
+.competitor-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.competitor-compare-grid article {
+  min-height: 280px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e3ebf3;
+  border-top: 4px solid #2458c6;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  box-shadow: var(--mabu-shadow-soft);
+}
+
+.competitor-card-head {
+  display: grid;
+  gap: 5px;
+}
+
+.competitor-card-head span {
+  color: var(--mabu-primary);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.competitor-card-head strong {
+  color: var(--mabu-text);
+  font-size: 18px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.competitor-compare-grid dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+}
+
+.competitor-compare-grid dl div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f2f6fb;
+}
+
+.competitor-compare-grid dt {
+  color: var(--mabu-muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.competitor-compare-grid dd {
+  margin: 0;
+  color: var(--mabu-text);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.competitor-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.competitor-keywords em {
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: #24456d;
+  background: #eef3f8;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.competitor-compare-grid p,
+.competitor-compare-grid b,
+.competitor-compare-grid small {
+  margin: 0;
+  color: var(--mabu-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.competitor-compare-grid b {
+  display: block;
+  padding: 10px;
+  border-radius: 8px;
+  color: #8a4a08;
+  background: #fff5e7;
+}
+
+.competitor-compare-grid small {
+  display: block;
+  padding: 10px;
+  border-radius: 8px;
+  color: var(--mabu-primary-deep);
+  background: #e9f9f6;
+  font-weight: 800;
+}
+
 .channel-strategy-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3570,6 +3701,7 @@ body {
   .marketing-design-form,
   .marketing-score-grid,
   .marketing-grid,
+  .competitor-compare-grid,
   .channel-strategy-grid,
   .marketing-roadmap {
     grid-template-columns: 1fr;

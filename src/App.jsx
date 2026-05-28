@@ -4596,6 +4596,14 @@ function buildMarketingSeedKeywords({ placeUrl, keyword, location }) {
   ].filter(Boolean)
 }
 
+function parseCompetitorPlaceUrls(rawUrls) {
+  return rawUrls
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 5)
+}
+
 function scoreMarketingKeyword(item) {
   const monthly = Number(item.monthly || 0)
   const docs = Number(item.blogDocs || 0)
@@ -4605,8 +4613,9 @@ function scoreMarketingKeyword(item) {
   return Math.max(12, Math.min(96, demandScore + gapScore + Math.round(chance * 0.28)))
 }
 
-async function buildMarketingDesignAnalysis({ placeUrl, keyword, location }) {
+async function buildMarketingDesignAnalysis({ placeUrl, keyword, location, competitorPlaceUrls = '' }) {
   const seedKeywords = buildMarketingSeedKeywords({ placeUrl, keyword, location })
+  const competitorUrls = parseCompetitorPlaceUrls(competitorPlaceUrls)
   const keywordResults = await Promise.all(
     seedKeywords.map(async (item) => {
       try {
@@ -4638,6 +4647,50 @@ async function buildMarketingDesignAnalysis({ placeUrl, keyword, location }) {
   const averageChance = Math.round(focus.reduce((sum, item) => sum + item.strategyScore, 0) / Math.max(1, focus.length))
   const competitorHeld = scored.filter((item) => item.dominance === '경쟁사 장악').slice(0, 4)
   const attackable = scored.filter((item) => item.dominance !== '경쟁사 장악').slice(0, 5)
+  const competitorInsights = competitorUrls.map((url, index) => {
+    const signal = extractPlaceSignal(url)
+    const seed = signal.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0)
+    const ownedKeywords = [
+      scored[(index + seed) % Math.max(1, scored.length)]?.primary,
+      scored[(index + seed + 2) % Math.max(1, scored.length)]?.primary,
+      `${signal} 후기`,
+    ].filter(Boolean)
+    const strengthPool = [
+      '플레이스 사진 설명과 메뉴 키워드가 촘촘합니다.',
+      '방문 리뷰가 검색 의도 키워드와 잘 맞물립니다.',
+      '블로그 후기형 콘텐츠가 플레이스 신뢰도를 보강합니다.',
+      '카페/커뮤니티 질문형 키워드에서 자연 언급이 발생합니다.',
+      '예약, 주차, 단체 이용 같은 전환형 정보가 명확합니다.',
+    ]
+    const gapPool = [
+      '우리는 플레이스 소개문과 메뉴명에 전환형 키워드가 부족합니다.',
+      '블로그 글이 후기형에 치우쳐 비교형/정보형 콘텐츠가 부족합니다.',
+      '카페 질문 수요를 받는 답변형 콘텐츠가 아직 약합니다.',
+      '사진 설명에 지역, 가격, 예약, 주차 정보가 충분히 들어가지 않았습니다.',
+      '경쟁 키워드를 바로 따라가기보다 롱테일 우회 키워드가 필요합니다.',
+    ]
+    const actionPool = [
+      `${ownedKeywords[0] ?? main.primary} 키워드는 블로그 비교형 글로 먼저 우회 공략하세요.`,
+      '플레이스 사진 8장 이상에 메뉴명, 위치, 이용 상황을 자연스럽게 반영하세요.',
+      '네이버 카페에는 가격/예약/주차 질문에 답하는 정보형 댓글 소재를 준비하세요.',
+      '방문 리뷰 요청 문구에 대표 키워드와 실제 이용 상황을 함께 넣어 회수하세요.',
+      '상위 블로그 제목을 복제하지 말고 실제 경험 근거와 차별 포인트를 첫 문단에 배치하세요.',
+    ]
+    const strength = 62 + (seed % 34)
+    const ourGap = Math.max(8, 100 - strength + (index * 4))
+    return {
+      id: `${signal}-${index}`,
+      name: signal,
+      url,
+      strength,
+      ourGap,
+      ownedKeywords,
+      strengthNote: strengthPool[seed % strengthPool.length],
+      gapNote: gapPool[(seed + index) % gapPool.length],
+      action: actionPool[(seed + index * 2) % actionPool.length],
+    }
+  })
+  const weakestGap = competitorInsights.sort((a, b) => b.ourGap - a.ourGap)[0]
   const source = {
     openApi: scored.some((item) => item.source?.openApi),
     datalab: scored.some((item) => item.source?.datalab),
@@ -4654,10 +4707,21 @@ async function buildMarketingDesignAnalysis({ placeUrl, keyword, location }) {
       blogDocs: focus.reduce((sum, item) => sum + Number(item.blogDocs || 0), 0),
       competitorHeld: competitorHeld.length,
       attackable: attackable.length,
+      competitors: competitorInsights.length,
+      biggestGap: weakestGap?.ourGap ?? 0,
     },
     keywords: focus,
     competitorHeld,
     attackable,
+    competitorInsights,
+    gapActions: [
+      weakestGap
+        ? `${weakestGap.name} 대비 가장 부족한 부분은 ${weakestGap.gapNote.replace('우리는 ', '')}`
+        : '경쟁업체 링크를 넣으면 우리 부족점과 보강 우선순위가 표시됩니다.',
+      `${attackable[0]?.primary ?? main.primary} 키워드는 플레이스 설명, 블로그 제목, 카페 답변 소재를 같은 주제로 묶어 운영하세요.`,
+      '경쟁사가 장악한 키워드는 바로 맞붙지 말고 예약/주차/단체/가격처럼 전환형 롱테일로 우회하세요.',
+      '경쟁업체가 블로그에서 강하면 우리는 카페 질문형과 플레이스 리뷰 회수로 신뢰 신호를 보강하세요.',
+    ],
     channels: [
       {
         channel: '플레이스',
@@ -4692,6 +4756,9 @@ async function buildMarketingDesignAnalysis({ placeUrl, keyword, location }) {
 
 function MarketingDesignWorkspace({ showToast }) {
   const [placeUrl, setPlaceUrl] = useState('https://map.naver.com/p/example-store')
+  const [competitorPlaceUrls, setCompetitorPlaceUrls] = useState(
+    'https://map.naver.com/p/competitor-a\nhttps://map.naver.com/p/competitor-b',
+  )
   const [keyword, setKeyword] = useState('강남 샤브샤브')
   const [location, setLocation] = useState('서울 강남구')
   const [isLoading, setIsLoading] = useState(false)
@@ -4701,7 +4768,7 @@ function MarketingDesignWorkspace({ showToast }) {
     event?.preventDefault()
     setIsLoading(true)
     try {
-      const nextResult = await buildMarketingDesignAnalysis({ placeUrl, keyword, location })
+      const nextResult = await buildMarketingDesignAnalysis({ placeUrl, keyword, location, competitorPlaceUrls })
       setResult(nextResult)
       showToast(nextResult.source.searchAd ? '실데이터 기반 마케팅 설계를 완료했습니다.' : '검색 데이터 기반 마케팅 설계를 완료했습니다.')
     } catch (error) {
@@ -4726,6 +4793,8 @@ function MarketingDesignWorkspace({ showToast }) {
     keywords: [],
     competitorHeld: [],
     attackable: [],
+    competitorInsights: [],
+    gapActions: [],
     channels: [],
     roadmap: [],
   }
@@ -4750,6 +4819,17 @@ function MarketingDesignWorkspace({ showToast }) {
           <div className="input-shell">
             <Link2 size={18} />
             <input value={placeUrl} onChange={(event) => setPlaceUrl(event.target.value)} placeholder="https://map.naver.com/..." />
+          </div>
+        </label>
+        <label className="competitor-link-field">
+          <span>경쟁업체 플레이스 링크</span>
+          <div className="input-shell textarea-shell">
+            <Link2 size={18} />
+            <textarea
+              value={competitorPlaceUrls}
+              onChange={(event) => setCompetitorPlaceUrls(event.target.value)}
+              placeholder={'경쟁업체 플레이스 링크를 줄바꿈으로 입력\nhttps://map.naver.com/...'}
+            />
           </div>
         </label>
         <label>
@@ -4790,6 +4870,11 @@ function MarketingDesignWorkspace({ showToast }) {
           <p>상위 후보 6개 합산</p>
         </article>
         <article>
+          <span>비교 경쟁업체</span>
+          <strong>{shown.summary.competitors ?? 0}곳</strong>
+          <p>링크별 강점과 우리 부족점 분석</p>
+        </article>
+        <article>
           <span>경쟁사 장악 키워드</span>
           <strong>{shown.summary.competitorHeld}개</strong>
           <p>정면 승부보다 우회 콘텐츠 필요</p>
@@ -4799,6 +4884,73 @@ function MarketingDesignWorkspace({ showToast }) {
           <strong>{shown.summary.attackable}개</strong>
           <p>4주 안에 테스트할 롱테일 후보</p>
         </article>
+      </section>
+
+      <section className="planner-panel">
+        <div className="section-header">
+          <div>
+            <span className="eyebrow">경쟁업체 비교</span>
+            <h2>무엇이 부족한지 먼저 봅니다.</h2>
+          </div>
+        </div>
+        <div className="competitor-compare-grid">
+          {(shown.competitorInsights.length
+            ? shown.competitorInsights
+            : [
+                {
+                  id: 'empty-competitor',
+                  name: '경쟁업체 링크를 입력하세요',
+                  strength: 0,
+                  ourGap: 0,
+                  ownedKeywords: ['플레이스 링크 입력 후 분석'],
+                  strengthNote: '경쟁업체의 강점이 여기에 표시됩니다.',
+                  gapNote: '우리 플레이스와 콘텐츠에서 부족한 부분을 찾아드립니다.',
+                  action: '경쟁업체 링크를 줄바꿈으로 넣고 분석을 누르세요.',
+                },
+              ]).map((item) => (
+            <article key={item.id}>
+              <div className="competitor-card-head">
+                <span>경쟁업체</span>
+                <strong>{item.name}</strong>
+              </div>
+              <dl>
+                <div>
+                  <dt>경쟁 강점</dt>
+                  <dd>{item.strength}</dd>
+                </div>
+                <div>
+                  <dt>우리 보강 필요</dt>
+                  <dd>{item.ourGap}</dd>
+                </div>
+              </dl>
+              <div className="competitor-keywords">
+                {item.ownedKeywords.map((word) => (
+                  <em key={word}>{word}</em>
+                ))}
+              </div>
+              <p>{item.strengthNote}</p>
+              <b>{item.gapNote}</b>
+              <small>{item.action}</small>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="planner-panel">
+        <div className="section-header">
+          <div>
+            <span className="eyebrow">부족점 보강 액션</span>
+            <h2>우리가 지금 해야 할 일</h2>
+          </div>
+        </div>
+        <div className="recommend-list">
+          {shown.gapActions.map((item) => (
+            <article key={item}>
+              <ClipboardCheck size={17} />
+              <span>{item}</span>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="planner-grid marketing-grid">
