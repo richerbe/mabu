@@ -3064,3 +3064,544 @@ td {
     grid-template-columns: 1fr;
   }
 }
+
+/* Premium UI refresh */
+:root {
+  --mabu-bg: #f3f6fa;
+  --mabu-surface: #ffffff;
+  --mabu-surface-soft: #f8fafc;
+  --mabu-line: #dbe4ee;
+  --mabu-line-strong: #c8d5e3;
+  --mabu-text: #102033;
+  --mabu-muted: #617188;
+  --mabu-subtle: #8794a7;
+  --mabu-primary: #0f766e;
+  --mabu-primary-deep: #0a4f4a;
+  --mabu-blue: #2458c6;
+  --mabu-amber: #c56b12;
+  --mabu-shadow: 0 14px 38px rgba(16, 32, 51, 0.08);
+  --mabu-shadow-soft: 0 8px 22px rgba(16, 32, 51, 0.05);
+}
+
+body {
+  background:
+    linear-gradient(180deg, #f8fafc 0%, var(--mabu-bg) 320px),
+    var(--mabu-bg);
+}
+
+.app-shell {
+  background:
+    linear-gradient(180deg, #f9fbfd 0%, #eef3f8 100%);
+  color: var(--mabu-text);
+}
+
+.sidebar {
+  border-right-color: rgba(200, 213, 227, 0.86);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 253, 0.96)),
+    #ffffff;
+  box-shadow: 10px 0 30px rgba(16, 32, 51, 0.04);
+}
+
+.brand {
+  padding: 4px 2px 12px;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.brand-mark {
+  background: linear-gradient(135deg, var(--mabu-primary), var(--mabu-blue));
+  box-shadow: 0 10px 22px rgba(15, 118, 110, 0.22);
+}
+
+.brand strong,
+.topbar h1,
+.planner-hero h1,
+.utility-hero h1,
+.section-header h2 {
+  letter-spacing: 0;
+}
+
+.nav-group-head,
+.utility-nav-head {
+  border-color: transparent;
+  color: #24364d;
+  background: #f7fafc;
+  box-shadow: inset 0 0 0 1px #e6edf4;
+}
+
+.nav-group.open .nav-group-head,
+.utility-nav.open .utility-nav-head {
+  color: var(--mabu-primary-deep);
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #cfe2df;
+}
+
+.nav-item,
+.utility-nav-item {
+  color: #42536b;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.nav-item:hover,
+.utility-nav-item:hover {
+  transform: translateX(2px);
+}
+
+.nav-item.active,
+.utility-nav-item.active {
+  border-color: #c9ddda;
+  color: var(--mabu-primary-deep);
+  background: linear-gradient(90deg, #ecfdfa, #f7fbff);
+  box-shadow: inset 3px 0 0 var(--mabu-primary);
+}
+
+.nav-item em {
+  color: var(--mabu-primary-deep);
+  background: #dff7f1;
+}
+
+.workspace {
+  max-width: 1720px;
+  width: 100%;
+}
+
+.topbar {
+  padding: 20px 22px;
+  border: 1px solid rgba(219, 228, 238, 0.86);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--mabu-shadow-soft);
+}
+
+.eyebrow {
+  color: var(--mabu-primary);
+  letter-spacing: 0;
+}
+
+.dashboard-overview-panel,
+.monthly-calendar-panel,
+.marketing-command-center,
+.content-calendar-panel,
+.planner-hero,
+.planner-panel,
+.utility-hero,
+.utility-panel,
+.analysis-form,
+.rank-panel,
+.trend-panel,
+.tracker-panel,
+.combo-panel,
+.metric-card,
+.keyword-search-panel,
+.index-form-panel,
+.profit-summary-card,
+.profit-input-grid,
+.tool-overview article,
+.keyword-metrics article {
+  border-color: rgba(210, 222, 234, 0.92);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--mabu-shadow-soft);
+}
+
+.dashboard-overview-panel:hover,
+.monthly-calendar-panel:hover,
+.marketing-command-center:hover,
+.content-calendar-panel:hover,
+.planner-panel:hover,
+.analysis-form:hover,
+.rank-panel:hover,
+.trend-panel:hover,
+.tracker-panel:hover,
+.combo-panel:hover,
+.keyword-metrics article:hover {
+  box-shadow: var(--mabu-shadow);
+}
+
+.planner-hero,
+.utility-hero {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 253, 0.96)),
+    #ffffff;
+}
+
+.planner-hero p,
+.utility-hero p,
+.topbar p,
+.dashboard-summary-card p,
+.platform-status-card p,
+.content-calendar-day p,
+.tool-overview p {
+  color: var(--mabu-muted);
+}
+
+.input-shell,
+.planner-panel textarea,
+.utility-panel textarea,
+.profit-input-grid input,
+.index-form-panel input[type='number'],
+.automation-scheduler-form select,
+.automation-scheduler-form input {
+  border-color: #d5e0eb;
+  background: #fbfdff;
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease,
+    background 0.14s ease;
+}
+
+.input-shell:focus-within,
+.planner-panel textarea:focus,
+.utility-panel textarea:focus,
+.profit-input-grid input:focus,
+.index-form-panel input[type='number']:focus,
+.automation-scheduler-form select:focus,
+.automation-scheduler-form input:focus {
+  border-color: #8dcac2;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.primary-action,
+.analyze-button {
+  border-color: var(--mabu-primary);
+  background: linear-gradient(135deg, var(--mabu-primary), #0b6d79);
+  box-shadow: 0 10px 22px rgba(15, 118, 110, 0.16);
+}
+
+.primary-action:hover,
+.analyze-button:hover {
+  background: linear-gradient(135deg, #0d6b64, #075f6a);
+}
+
+.secondary-action,
+.ghost-button,
+.icon-button,
+.check-button {
+  border-color: #d7e1ec;
+  background: #ffffff;
+}
+
+.secondary-action:hover,
+.ghost-button:hover,
+.icon-button:hover,
+.check-button:hover {
+  border-color: #b9c9dc;
+  background: #f7fafc;
+}
+
+.dashboard-summary-card,
+.platform-status-card,
+.sns-connection-card,
+.content-idea-grid article,
+.topic-idea-card,
+.month-calendar-cell,
+.content-calendar-day,
+.automation-calendar-day,
+.result-list article,
+.recommend-list article,
+.seller-table-row,
+.live-result-list a {
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+}
+
+.dashboard-summary-card strong,
+.keyword-metrics strong,
+.metric-card strong,
+.platform-status-metric b,
+.profit-summary-card strong {
+  color: #0e2035;
+}
+
+.metric-card.primary,
+.planner-score,
+.marketing-score-card.primary {
+  background:
+    linear-gradient(135deg, #0f766e, #2458c6),
+    #0f766e;
+}
+
+.month-calendar-cell.today,
+.automation-calendar-day.today {
+  border-color: #91d4cb;
+  background: #effdfa;
+}
+
+.api-status-strip span.connected {
+  border-color: #98d8cf;
+  color: var(--mabu-primary-deep);
+  background: #ecfdfa;
+}
+
+.marketing-design {
+  display: grid;
+  gap: 18px;
+}
+
+.marketing-hero {
+  min-height: 210px;
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(36, 88, 198, 0.08)),
+    #ffffff;
+}
+
+.marketing-hero h1 {
+  max-width: 980px;
+}
+
+.marketing-design-form {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.35fr) minmax(220px, 0.75fr) minmax(180px, 0.6fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 18px;
+  border: 1px solid rgba(210, 222, 234, 0.92);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--mabu-shadow-soft);
+}
+
+.marketing-score-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.25fr) repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.marketing-score-card,
+.marketing-score-grid article {
+  min-height: 138px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid rgba(210, 222, 234, 0.92);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--mabu-shadow-soft);
+}
+
+.marketing-score-grid article span {
+  color: var(--mabu-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.marketing-score-grid article strong {
+  color: var(--mabu-text);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.marketing-score-grid article p {
+  margin: 0;
+  color: var(--mabu-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.marketing-score-card.primary span,
+.marketing-score-card.primary strong,
+.marketing-score-card.primary p {
+  color: #ffffff;
+}
+
+.marketing-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.marketing-keyword-list {
+  display: grid;
+  gap: 10px;
+}
+
+.marketing-keyword-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #e3ebf3;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+}
+
+.marketing-keyword-list strong,
+.marketing-keyword-list span {
+  display: block;
+}
+
+.marketing-keyword-list strong {
+  color: var(--mabu-text);
+  line-height: 1.35;
+}
+
+.marketing-keyword-list span {
+  margin-top: 4px;
+  color: var(--mabu-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.marketing-keyword-list em,
+.marketing-keyword-list b {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.marketing-keyword-list em {
+  color: var(--mabu-primary-deep);
+  background: #e7f8f4;
+}
+
+.marketing-keyword-list b {
+  color: #43546b;
+  background: #eef3f8;
+}
+
+.channel-strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.channel-strategy-grid article {
+  min-height: 216px;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #e3ebf3;
+  border-top: 4px solid var(--mabu-primary);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+}
+
+.channel-strategy-grid span,
+.channel-strategy-grid em,
+.channel-strategy-grid b {
+  width: fit-content;
+  border-radius: 999px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.channel-strategy-grid span {
+  padding: 4px 8px;
+  color: var(--mabu-primary-deep);
+  background: #e7f8f4;
+}
+
+.channel-strategy-grid strong {
+  color: var(--mabu-text);
+  font-size: 19px;
+}
+
+.channel-strategy-grid em {
+  padding: 4px 8px;
+  color: #24456d;
+  background: #eef3f8;
+}
+
+.channel-strategy-grid p {
+  margin: 0;
+  color: #43546b;
+  line-height: 1.55;
+}
+
+.channel-strategy-grid b {
+  padding: 5px 9px;
+  color: #8a4a08;
+  background: #fff5e7;
+}
+
+.marketing-roadmap {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.marketing-roadmap article {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 172px;
+  padding: 15px;
+  border: 1px solid #e3ebf3;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+}
+
+.marketing-roadmap span {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: var(--mabu-primary);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.marketing-roadmap strong {
+  color: var(--mabu-text);
+  font-size: 16px;
+}
+
+.marketing-roadmap p {
+  margin: 0;
+  color: var(--mabu-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+@media (max-width: 1100px) {
+  .marketing-design-form,
+  .marketing-score-grid,
+  .marketing-grid,
+  .channel-strategy-grid,
+  .marketing-roadmap {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    padding: 16px;
+  }
+
+  .workspace {
+    max-width: none;
+  }
+
+  .nav-item:hover,
+  .utility-nav-item:hover {
+    transform: none;
+  }
+
+  .marketing-hero {
+    min-height: auto;
+  }
+
+  .marketing-design-form,
+  .marketing-score-card,
+  .marketing-score-grid article {
+    padding: 14px;
+  }
+
+  .marketing-keyword-list article {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+}

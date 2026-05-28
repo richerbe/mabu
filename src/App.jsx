@@ -32,6 +32,7 @@ import './App.css'
 
 const tools = [
   { id: 'dashboard', label: '대시보드', icon: Activity, badge: 'Home' },
+  { id: 'marketing-design', label: '마케팅 설계', icon: Sparkles, badge: '전략' },
   { id: 'place', label: '플레이스 분석', icon: Store, badge: '인기' },
   { id: 'rank', label: '순위 비교', icon: BarChart3, badge: '추천' },
   { id: 'blog', label: '블로그 검사', icon: BookOpenCheck },
@@ -63,6 +64,7 @@ const tools = [
 
 const toolGroups = [
   { id: 'dashboard', label: '대시보드', toolIds: ['dashboard'] },
+  { id: 'marketing', label: '마케팅 설계', toolIds: ['marketing-design'] },
   { id: 'place', label: '플레이스 전용', toolIds: ['place', 'rank', 'place-once'] },
   { id: 'blog', label: '블로그 전용', toolIds: ['blog', 'blog-writer', 'blog-planner', 'blog-index', 'blog-info', 'blog-exposure'] },
   { id: 'store', label: '셀러 전용', toolIds: ['seller-keyword', 'seller-finder', 'seller-product', 'seller-rank', 'seller-ai', 'shop', 'price', 'nstore'] },
@@ -79,6 +81,21 @@ const utilities = [
 ]
 
 const toolConfigs = {
+  'marketing-design': {
+    headline: '플레이스 링크를 기준으로 네이버 카페, 블로그, 플레이스 상위노출 전략을 설계합니다.',
+    urlLabel: '네이버 플레이스 URL',
+    keywordLabel: '핵심 업종 키워드',
+    locationLabel: '상권/지역',
+    primaryMetric: '전략 완성도',
+    tableEyebrow: '마케팅 설계',
+    tableTitle: '상위노출 키워드 설계',
+    trendTitle: '채널별 우선순위',
+    trendNote: '플레이스는 저장/리뷰, 블로그는 검색 의도, 카페는 질문형 침투를 함께 설계해야 네이버 전체 노출면을 잡을 수 있습니다.',
+    defaultKeyword: '강남 샤브샤브',
+    tags: ['강남 샤브샤브', '역삼 점심', '강남 회식', '샤브샤브 맛집', '단체 예약', '주차 가능'],
+    rows: baseRows('강남 샤브샤브', 5),
+    cards: ['플레이스 링크 기반 진단', '경쟁 키워드 장악도 분석', '블로그/카페/플레이스 실행 플랜'],
+  },
   place: {
     headline: '플레이스 URL을 기준으로 대표 키워드와 숨은 노출 기회를 찾습니다.',
     urlLabel: '네이버 플레이스 URL',
@@ -4548,6 +4565,339 @@ function InfluencerFinderWorkspace({ showToast }) {
   )
 }
 
+function extractPlaceSignal(placeUrl) {
+  const decoded = decodeURIComponent(placeUrl || '')
+  const compact = decoded
+    .replace(/^https?:\/\//, '')
+    .replace(/[?#].*$/, '')
+    .replace(/[-_/]+/g, ' ')
+  const chunks = compact
+    .split(/\s+/)
+    .filter((item) => item.length > 1)
+    .slice(-4)
+  return chunks.join(' ') || '네이버 플레이스'
+}
+
+function buildMarketingSeedKeywords({ placeUrl, keyword, location }) {
+  const placeSignal = extractPlaceSignal(placeUrl)
+  const primary = keyword.trim() || `${placeSignal} 맛집`
+  const area = location.trim() || placeSignal
+  const shortArea = area.split(/\s+/).slice(-1)[0] || area
+  return [
+    primary,
+    `${shortArea} ${primary}`,
+    `${primary} 맛집`,
+    `${primary} 예약`,
+    `${primary} 후기`,
+    `${primary} 주차`,
+    `${shortArea} 점심 추천`,
+    `${shortArea} 회식 장소`,
+    `${placeSignal} 후기`,
+  ].filter(Boolean)
+}
+
+function scoreMarketingKeyword(item) {
+  const monthly = Number(item.monthly || 0)
+  const docs = Number(item.blogDocs || 0)
+  const chance = Number(item.chance || 0)
+  const demandScore = Math.min(40, Math.round(monthly / 2500))
+  const gapScore = Math.max(0, 34 - Math.round(docs / 120000))
+  return Math.max(12, Math.min(96, demandScore + gapScore + Math.round(chance * 0.28)))
+}
+
+async function buildMarketingDesignAnalysis({ placeUrl, keyword, location }) {
+  const seedKeywords = buildMarketingSeedKeywords({ placeUrl, keyword, location })
+  const keywordResults = await Promise.all(
+    seedKeywords.map(async (item) => {
+      try {
+        return await fetchNaverKeywordAnalysis(item)
+      } catch {
+        return buildNaverKeywordAnalysis(item)
+      }
+    }),
+  )
+
+  const scored = keywordResults
+    .map((item) => ({
+      ...item,
+      strategyScore: scoreMarketingKeyword(item),
+      dominance:
+        item.competition >= 82 ? '경쟁사 장악' : item.competition >= 60 ? '혼전 구간' : '침투 가능',
+      intent:
+        item.primary.includes('예약') || item.primary.includes('주차')
+          ? '전환형'
+          : item.primary.includes('후기') || item.primary.includes('추천')
+            ? '검토형'
+            : '탐색형',
+    }))
+    .sort((a, b) => b.strategyScore - a.strategyScore)
+
+  const focus = scored.slice(0, 6)
+  const main = focus[0] ?? buildNaverKeywordAnalysis(keyword)
+  const areaLabel = location.trim() || extractPlaceSignal(placeUrl)
+  const averageChance = Math.round(focus.reduce((sum, item) => sum + item.strategyScore, 0) / Math.max(1, focus.length))
+  const competitorHeld = scored.filter((item) => item.dominance === '경쟁사 장악').slice(0, 4)
+  const attackable = scored.filter((item) => item.dominance !== '경쟁사 장악').slice(0, 5)
+  const source = {
+    openApi: scored.some((item) => item.source?.openApi),
+    datalab: scored.some((item) => item.source?.datalab),
+    searchAd: scored.some((item) => item.source?.searchAd),
+  }
+
+  return {
+    placeSignal: extractPlaceSignal(placeUrl),
+    source,
+    summary: {
+      score: averageChance,
+      primary: main.primary,
+      monthly: focus.reduce((sum, item) => sum + Number(item.monthly || 0), 0),
+      blogDocs: focus.reduce((sum, item) => sum + Number(item.blogDocs || 0), 0),
+      competitorHeld: competitorHeld.length,
+      attackable: attackable.length,
+    },
+    keywords: focus,
+    competitorHeld,
+    attackable,
+    channels: [
+      {
+        channel: '플레이스',
+        role: '전환 거점',
+        priority: 1,
+        KPI: '저장, 길찾기, 예약, 방문 리뷰',
+        action: `${areaLabel} 기준 대표 키워드 3개를 업체명, 소개문, 메뉴명, 사진 설명에 반복 없이 배치하세요.`,
+      },
+      {
+        channel: '블로그',
+        role: '검색 장악',
+        priority: 2,
+        KPI: 'VIEW 상단, 체류 시간, 저장/댓글',
+        action: `${main.primary} 중심으로 후기형 4개, 비교형 3개, 정보형 3개를 4주 동안 묶음 발행하세요.`,
+      },
+      {
+        channel: '네이버 카페',
+        role: '질문 수요 침투',
+        priority: 3,
+        KPI: '댓글 반응, 브랜드 언급, 재검색',
+        action: '가격, 주차, 예약, 단체 방문처럼 질문이 생기는 키워드를 자연스러운 답변형 콘텐츠로 설계하세요.',
+      },
+    ],
+    roadmap: [
+      { week: '1주차', title: '플레이스 기초 정리', detail: '대표 키워드, 메뉴명, 사진 설명, 예약/주차 정보를 정리하고 리뷰 요청 문구를 통일합니다.' },
+      { week: '2주차', title: '블로그 클러스터 발행', detail: `${main.primary}, ${attackable[0]?.primary ?? '롱테일 키워드'} 중심으로 후기형 글을 발행합니다.` },
+      { week: '3주차', title: '카페 질문형 침투', detail: '카페 검색에서 자주 나오는 질문형 소재를 정리하고 답변형 콘텐츠로 유입을 만듭니다.' },
+      { week: '4주차', title: '성과 회수와 보강', detail: '상위노출이 붙은 키워드는 내부 링크로 묶고, 장악된 키워드는 비교/후기 각도를 바꿔 재공략합니다.' },
+    ],
+  }
+}
+
+function MarketingDesignWorkspace({ showToast }) {
+  const [placeUrl, setPlaceUrl] = useState('https://map.naver.com/p/example-store')
+  const [keyword, setKeyword] = useState('강남 샤브샤브')
+  const [location, setLocation] = useState('서울 강남구')
+  const [isLoading, setIsLoading] = useState(false)
+  const [result, setResult] = useState(null)
+
+  const runDesign = async (event) => {
+    event?.preventDefault()
+    setIsLoading(true)
+    try {
+      const nextResult = await buildMarketingDesignAnalysis({ placeUrl, keyword, location })
+      setResult(nextResult)
+      showToast(nextResult.source.searchAd ? '실데이터 기반 마케팅 설계를 완료했습니다.' : '검색 데이터 기반 마케팅 설계를 완료했습니다.')
+    } catch (error) {
+      showToast(error.message || '마케팅 설계 생성에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      runDesign()
+    }, 0)
+    return () => window.clearTimeout(timer)
+    // 초기 진입 시 샘플 전략을 한 번 생성합니다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const shown = result ?? {
+    source: { openApi: false, datalab: false, searchAd: false },
+    summary: { score: 0, primary: keyword, monthly: 0, blogDocs: 0, competitorHeld: 0, attackable: 0 },
+    keywords: [],
+    competitorHeld: [],
+    attackable: [],
+    channels: [],
+    roadmap: [],
+  }
+
+  return (
+    <section className="marketing-design">
+      <div className="planner-hero marketing-hero">
+        <div>
+          <span className="eyebrow">네이버 마케팅 설계</span>
+          <h1>플레이스 링크 하나로 블로그, 카페, 플레이스 공략 순서를 설계합니다.</h1>
+          <p>경쟁사가 장악한 키워드와 우리가 먼저 잡아야 할 롱테일 키워드를 분리해 4주 실행 계획으로 정리합니다.</p>
+        </div>
+        <button className="primary-action" type="button" onClick={runDesign} disabled={isLoading}>
+          {isLoading ? <RefreshCw size={18} className="spin" /> : <Sparkles size={18} />}
+          {isLoading ? '설계 중' : '전략 설계'}
+        </button>
+      </div>
+
+      <form className="marketing-design-form" onSubmit={runDesign}>
+        <label>
+          <span>네이버 플레이스 링크</span>
+          <div className="input-shell">
+            <Link2 size={18} />
+            <input value={placeUrl} onChange={(event) => setPlaceUrl(event.target.value)} placeholder="https://map.naver.com/..." />
+          </div>
+        </label>
+        <label>
+          <span>핵심 업종 키워드</span>
+          <div className="input-shell">
+            <Search size={18} />
+            <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="선택 입력: 강남 샤브샤브" />
+          </div>
+        </label>
+        <label>
+          <span>상권/지역</span>
+          <div className="input-shell">
+            <Store size={18} />
+            <input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="선택 입력: 서울 강남구" />
+          </div>
+        </label>
+        <button className="analyze-button" type="submit" disabled={isLoading}>
+          <BarChart3 size={18} />
+          분석
+        </button>
+      </form>
+
+      <section className="api-status-strip">
+        <span className={shown.source.openApi ? 'connected' : ''}>검색 Open API</span>
+        <span className={shown.source.datalab ? 'connected' : ''}>데이터랩</span>
+        <span className={shown.source.searchAd ? 'connected' : ''}>검색광고 월검색량</span>
+      </section>
+
+      <section className="marketing-score-grid">
+        <article className="marketing-score-card primary">
+          <span>마케팅 공략 점수</span>
+          <strong>{shown.summary.score}</strong>
+          <p>{shown.summary.primary} 기준으로 플레이스, 블로그, 카페 실행 순서를 설계했습니다.</p>
+        </article>
+        <article>
+          <span>후보 월검색량</span>
+          <strong>{shown.summary.monthly ? shown.summary.monthly.toLocaleString() : '-'}</strong>
+          <p>상위 후보 6개 합산</p>
+        </article>
+        <article>
+          <span>경쟁사 장악 키워드</span>
+          <strong>{shown.summary.competitorHeld}개</strong>
+          <p>정면 승부보다 우회 콘텐츠 필요</p>
+        </article>
+        <article>
+          <span>우선 공략 키워드</span>
+          <strong>{shown.summary.attackable}개</strong>
+          <p>4주 안에 테스트할 롱테일 후보</p>
+        </article>
+      </section>
+
+      <section className="planner-grid marketing-grid">
+        <div className="planner-panel">
+          <div className="section-header">
+            <div>
+              <span className="eyebrow">경쟁사 장악 구간</span>
+              <h2>바로 이기기 어려운 키워드</h2>
+            </div>
+          </div>
+          <div className="marketing-keyword-list">
+            {(shown.competitorHeld.length ? shown.competitorHeld : shown.keywords.slice(0, 3)).map((item) => (
+              <article key={item.primary}>
+                <div>
+                  <strong>{item.primary}</strong>
+                  <span>{item.intent} · {item.dominance}</span>
+                </div>
+                <em>{item.monthly ? item.monthly.toLocaleString() : '-'}회</em>
+                <b>{item.difficulty}</b>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div className="planner-panel">
+          <div className="section-header">
+            <div>
+              <span className="eyebrow">우선 공략 구간</span>
+              <h2>우리가 먼저 잡을 키워드</h2>
+            </div>
+          </div>
+          <div className="marketing-keyword-list">
+            {(shown.attackable.length ? shown.attackable : shown.keywords.slice(0, 5)).map((item) => (
+              <article key={item.primary}>
+                <div>
+                  <strong>{item.primary}</strong>
+                  <span>공략 점수 {item.strategyScore} · 경쟁도 {item.competition}/100</span>
+                </div>
+                <em>{item.blogDocs ? item.blogDocs.toLocaleString() : '-'}문서</em>
+                <b>{item.intent}</b>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="planner-panel">
+        <div className="section-header">
+          <div>
+            <span className="eyebrow">채널 전략</span>
+            <h2>블로그, 카페, 플레이스 역할 분담</h2>
+          </div>
+        </div>
+        <div className="channel-strategy-grid">
+          {shown.channels.map((item) => (
+            <article key={item.channel}>
+              <span>우선순위 {item.priority}</span>
+              <strong>{item.channel}</strong>
+              <em>{item.role}</em>
+              <p>{item.action}</p>
+              <b>{item.KPI}</b>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="planner-panel">
+        <div className="section-header">
+          <div>
+            <span className="eyebrow">4주 실행안</span>
+            <h2>이번 달 마케팅 운영 순서</h2>
+          </div>
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => {
+              const text = shown.roadmap.map((item) => `${item.week} ${item.title}: ${item.detail}`).join('\n')
+              navigator.clipboard.writeText(text)
+              showToast('4주 실행안을 복사했습니다.')
+            }}
+          >
+            <ClipboardCheck size={17} />
+            복사
+          </button>
+        </div>
+        <div className="marketing-roadmap">
+          {shown.roadmap.map((item) => (
+            <article key={item.week}>
+              <span>{item.week}</span>
+              <strong>{item.title}</strong>
+              <p>{item.detail}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </section>
+  )
+}
+
 function buildNaverKeywordAnalysis(keyword) {
   const primary = keyword.trim() || '강남 맛집'
   const seed = primary.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0)
@@ -5002,6 +5352,7 @@ function App() {
   const [activeUtility, setActiveUtility] = useState('')
   const [openGroups, setOpenGroups] = useState(() => ({
     dashboard: true,
+    marketing: true,
     place: true,
     blog: true,
     store: true,
@@ -5032,7 +5383,7 @@ function App() {
     return new Date(today.getFullYear(), today.getMonth(), 1)
   })
   const [generatedContent, setGeneratedContent] = useState(() => readStorage('nboost:generated-content', null))
-  const [profitForm, setProfitForm] = useState(() =>
+  const [profitForm] = useState(() =>
     readStorage('nboost:profit', {
       revenue: 12800000,
       adCost: 2450000,
@@ -5348,6 +5699,8 @@ function App() {
           <UtilityWorkspace activeUtility={activeUtility} setActiveUtility={handleUtilityChange} showToast={showToast} />
         ) : activeTool === 'content-automation' ? (
           <ContentAutomationWorkspace showToast={showToast} />
+        ) : activeTool === 'marketing-design' ? (
+          <MarketingDesignWorkspace showToast={showToast} />
         ) : activeTool === 'seller-keyword' ? (
           <SellerKeywordWorkspace showToast={showToast} />
         ) : activeTool === 'seller-finder' ? (
