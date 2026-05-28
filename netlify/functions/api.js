@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { generateBlogWriterArticle, getAiApiStatus } from '../../server/aiApi.js'
+import { buildKakaoErrorRedirect, buildKakaoLoginUrl, buildKakaoSuccessRedirect, completeKakaoLogin, getKakaoAuthStatus } from '../../server/kakaoAuth.js'
 import { analyzeCompetitorBlogLinks, analyzeProductLink, analyzeYoutubeLink, getNaverApiStatus, getNaverKeywordInsight } from '../../server/naverApi.js'
 
 function json(statusCode, body) {
@@ -13,6 +14,44 @@ function json(statusCode, body) {
     },
     body: JSON.stringify(body),
   }
+}
+
+function redirect(location, headers = {}) {
+  return {
+    statusCode: 302,
+    headers: {
+      Location: location,
+      ...headers,
+    },
+    body: '',
+  }
+}
+
+function getOrigin(event) {
+  const host = event.headers.host || event.headers.Host || 'mabu-marketing-boost.netlify.app'
+  const proto = event.headers['x-forwarded-proto'] || event.headers['X-Forwarded-Proto'] || 'https'
+  return `${proto}://${host}`
+}
+
+function createRequestLike(event) {
+  const origin = getOrigin(event)
+  const url = new URL(event.rawUrl || `${origin}${event.path}`)
+  return {
+    headers: event.headers,
+    protocol: url.protocol.replace(':', ''),
+    get(name) {
+      return event.headers[name.toLowerCase()] || event.headers[name] || ''
+    },
+  }
+}
+
+function readCookie(event, name) {
+  const cookies = String(event.headers.cookie || event.headers.Cookie || '')
+    .split(';')
+    .map((item) => item.trim())
+    .filter(Boolean)
+  const match = cookies.find((item) => item.startsWith(`${name}=`))
+  return match ? decodeURIComponent(match.slice(name.length + 1)) : ''
 }
 
 function parseBody(event) {
@@ -51,6 +90,44 @@ async function handleRequest(event) {
 
   if (method === 'GET' && path === '/ai/status') {
     return json(200, getAiApiStatus())
+  }
+
+  if (method === 'GET' && path === '/auth/kakao/status') {
+    return json(200, getKakaoAuthStatus())
+  }
+
+  if (method === 'GET' && path === '/auth/kakao/login') {
+    try {
+      const req = createRequestLike(event)
+      const { state, url } = buildKakaoLoginUrl(req)
+      return redirect(url, {
+        'Set-Cookie': `mabu_kakao_state=${encodeURIComponent(state)}; Max-Age=600; Path=/; HttpOnly; SameSite=Lax; Secure`,
+      })
+    } catch (error) {
+      return redirect(buildKakaoErrorRedirect(error.message || '카카오 로그인을 시작하지 못했습니다.', getOrigin(event)))
+    }
+  }
+
+  if (method === 'GET' && path === '/auth/kakao/callback') {
+    try {
+      const state = String(event.queryStringParameters?.state ?? '')
+      const savedState = readCookie(event, 'mabu_kakao_state')
+      if (savedState && state && savedState !== state) {
+        const error = new Error('카카오 로그인 상태 검증에 실패했습니다.')
+        error.status = 400
+        throw error
+      }
+
+      const user = await completeKakaoLogin({
+        code: String(event.queryStringParameters?.code ?? ''),
+        req: createRequestLike(event),
+      })
+      return redirect(buildKakaoSuccessRedirect(user, getOrigin(event)), {
+        'Set-Cookie': 'mabu_kakao_state=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure',
+      })
+    } catch (error) {
+      return redirect(buildKakaoErrorRedirect(error.message || '카카오 로그인에 실패했습니다.', getOrigin(event)))
+    }
   }
 
   if (method === 'GET' && path === '/naver/keyword') {

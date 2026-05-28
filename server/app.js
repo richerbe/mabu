@@ -1,12 +1,23 @@
 import cors from 'cors'
 import express from 'express'
 import { generateBlogWriterArticle, getAiApiStatus } from './aiApi.js'
+import { buildKakaoErrorRedirect, buildKakaoLoginUrl, buildKakaoSuccessRedirect, completeKakaoLogin, getKakaoAuthStatus } from './kakaoAuth.js'
 import { analyzeCompetitorBlogLinks, analyzeProductLink, analyzeYoutubeLink, getNaverApiStatus, getNaverKeywordInsight } from './naverApi.js'
 
 const app = express()
 
 app.use(cors())
 app.use(express.json({ limit: '1mb' }))
+
+function readCookie(req, name) {
+  const cookies = String(req.headers.cookie || '')
+    .split(';')
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+  const match = cookies.find((item) => item.startsWith(`${name}=`))
+  return match ? decodeURIComponent(match.slice(name.length + 1)) : ''
+}
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'mabu-api' })
@@ -18,6 +29,43 @@ app.get('/api/naver/status', (req, res) => {
 
 app.get('/api/ai/status', (req, res) => {
   res.json(getAiApiStatus())
+})
+
+app.get('/api/auth/kakao/status', (req, res) => {
+  res.json(getKakaoAuthStatus())
+})
+
+app.get('/api/auth/kakao/login', (req, res) => {
+  try {
+    const { state, url } = buildKakaoLoginUrl(req)
+    res.cookie('mabu_kakao_state', state, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: req.secure || req.get('x-forwarded-proto') === 'https',
+      maxAge: 10 * 60 * 1000,
+    })
+    res.redirect(url)
+  } catch (error) {
+    res.redirect(buildKakaoErrorRedirect(error.message || '카카오 로그인을 시작하지 못했습니다.'))
+  }
+})
+
+app.get('/api/auth/kakao/callback', async (req, res) => {
+  try {
+    const state = String(req.query.state ?? '')
+    const savedState = readCookie(req, 'mabu_kakao_state')
+    if (savedState && state && savedState !== state) {
+      const error = new Error('카카오 로그인 상태 검증에 실패했습니다.')
+      error.status = 400
+      throw error
+    }
+
+    const user = await completeKakaoLogin({ code: String(req.query.code ?? ''), req })
+    res.clearCookie('mabu_kakao_state')
+    res.redirect(buildKakaoSuccessRedirect(user))
+  } catch (error) {
+    res.redirect(buildKakaoErrorRedirect(error.message || '카카오 로그인에 실패했습니다.'))
+  }
 })
 
 app.get('/api/naver/keyword', async (req, res) => {

@@ -756,6 +756,14 @@ function writeStorage(key, value) {
   window.localStorage.setItem(key, JSON.stringify(value))
 }
 
+function decodeBase64UrlJson(value) {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+  const decoded = window.atob(padded)
+  const text = new TextDecoder().decode(Uint8Array.from(decoded, (char) => char.charCodeAt(0)))
+  return JSON.parse(text)
+}
+
 function buildAnalysis({ placeUrl, keyword, location, tool }) {
   const seed = `${placeUrl}${keyword}${location}${tool}`.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0)
   return {
@@ -5450,6 +5458,27 @@ function BlogIndexEstimator({ showToast }) {
 function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState('owner@mabu.kr')
   const [name, setName] = useState('마부 운영자')
+  const [loginMessage, setLoginMessage] = useState('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const kakaoLogin = params.get('kakao_login')
+    if (!kakaoLogin) return
+
+    if (kakaoLogin === 'success') {
+      try {
+        const user = decodeBase64UrlJson(params.get('kakao_user') || '')
+        onLogin(user)
+        window.history.replaceState({}, '', window.location.pathname)
+      } catch {
+        window.setTimeout(() => setLoginMessage('카카오 로그인 정보를 읽지 못했습니다. 다시 시도해 주세요.'), 0)
+      }
+      return
+    }
+
+    window.setTimeout(() => setLoginMessage(params.get('message') || '카카오 로그인에 실패했습니다.'), 0)
+    window.history.replaceState({}, '', window.location.pathname)
+  }, [onLogin])
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -5475,6 +5504,13 @@ function LoginScreen({ onLogin }) {
       <form className="login-card" onSubmit={handleSubmit}>
         <span className="eyebrow">간편 시작</span>
         <h2>워크스페이스 로그인</h2>
+        {loginMessage && <p className="login-message">{loginMessage}</p>}
+        <a className="kakao-login-button" href="/api/auth/kakao/login">
+          카카오톡으로 로그인
+        </a>
+        <div className="login-divider">
+          <span>또는</span>
+        </div>
         <label>
           <span>이름</span>
           <div className="input-shell">
