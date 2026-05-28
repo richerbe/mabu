@@ -5459,6 +5459,8 @@ function LoginScreen({ onLogin }) {
   const [email, setEmail] = useState('owner@mabu.kr')
   const [name, setName] = useState('마부 운영자')
   const [loginMessage, setLoginMessage] = useState('')
+  const [kakaoStatus, setKakaoStatus] = useState({ checked: false, configured: false })
+  const [isKakaoLoading, setIsKakaoLoading] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -5480,9 +5482,35 @@ function LoginScreen({ onLogin }) {
     window.history.replaceState({}, '', window.location.pathname)
   }, [onLogin])
 
+  useEffect(() => {
+    let ignore = false
+
+    fetch('/api/auth/kakao/status')
+      .then((response) => response.json())
+      .then((status) => {
+        if (!ignore) {
+          setKakaoStatus({ checked: true, configured: Boolean(status.configured) })
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setKakaoStatus({ checked: true, configured: false })
+        }
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   const handleSubmit = (event) => {
     event.preventDefault()
     onLogin({ email, name, plan: 'Starter' })
+  }
+
+  const handleKakaoLogin = () => {
+    setIsKakaoLoading(true)
+    window.location.assign('/api/auth/kakao/login')
   }
 
   return (
@@ -5505,9 +5533,21 @@ function LoginScreen({ onLogin }) {
         <span className="eyebrow">간편 시작</span>
         <h2>워크스페이스 로그인</h2>
         {loginMessage && <p className="login-message">{loginMessage}</p>}
-        <a className="kakao-login-button" href="/api/auth/kakao/login">
-          카카오톡으로 로그인
-        </a>
+        <button
+          className="kakao-login-button"
+          type="button"
+          onClick={handleKakaoLogin}
+          disabled={isKakaoLoading || (kakaoStatus.checked && !kakaoStatus.configured)}
+        >
+          {isKakaoLoading ? '카카오 로그인으로 이동 중...' : '카카오톡으로 로그인'}
+        </button>
+        <p className={`kakao-status ${kakaoStatus.configured ? 'is-ready' : ''}`}>
+          {kakaoStatus.checked
+            ? kakaoStatus.configured
+              ? '카카오 API 연결됨'
+              : '카카오 API 키가 아직 연결되지 않았습니다.'
+            : '카카오 연결 상태 확인 중'}
+        </p>
         <div className="login-divider">
           <span>또는</span>
         </div>

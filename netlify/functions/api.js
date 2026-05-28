@@ -110,6 +110,13 @@ async function handleRequest(event) {
 
   if (method === 'GET' && path === '/auth/kakao/callback') {
     try {
+      if (event.queryStringParameters?.error) {
+        const errorDescription = String(event.queryStringParameters.error_description || event.queryStringParameters.error || '카카오 로그인이 취소되었습니다.')
+        const error = new Error(errorDescription)
+        error.status = 400
+        throw error
+      }
+
       const state = String(event.queryStringParameters?.state ?? '')
       const savedState = readCookie(event, 'mabu_kakao_state')
       if (savedState && state && savedState !== state) {

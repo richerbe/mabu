@@ -78,13 +78,31 @@
   border-radius: 8px;
   color: #191600;
   background: #fee500;
-  text-decoration: none;
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
   font-weight: 900;
   box-shadow: 0 10px 22px rgba(254, 229, 0, 0.18);
 }
 
 .kakao-login-button:hover {
   background: #f8dc00;
+}
+
+.kakao-login-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.kakao-status {
+  margin: -6px 0 0;
+  color: #8a5a00;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.kakao-status.is-ready {
+  color: #0f766e;
 }
 
 .login-divider {

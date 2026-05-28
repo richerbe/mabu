@@ -52,6 +52,13 @@ app.get('/api/auth/kakao/login', (req, res) => {
 
 app.get('/api/auth/kakao/callback', async (req, res) => {
   try {
+    if (req.query.error) {
+      const errorDescription = String(req.query.error_description || req.query.error || '카카오 로그인이 취소되었습니다.')
+      const error = new Error(errorDescription)
+      error.status = 400
+      throw error
+    }
+
     const state = String(req.query.state ?? '')
     const savedState = readCookie(req, 'mabu_kakao_state')
     if (savedState && state && savedState !== state) {
