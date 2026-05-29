@@ -57,6 +57,43 @@
   font-size: 24px;
 }
 
+.login-method {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #dce7f0;
+  border-radius: 8px;
+  background: #f9fbfd;
+}
+
+.login-method-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #102033;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.login-method-heading em {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #0f766e;
+  background: #dff8f2;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.kakao-method {
+  border-color: #f7df62;
+  background: #fffbea;
+}
+
+.phone-method {
+  background: #ffffff;
+}
+
 .login-message {
   margin: 0;
   padding: 10px 12px;

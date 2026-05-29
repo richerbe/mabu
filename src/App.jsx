@@ -18,6 +18,7 @@ import {
   LogOut,
   MessageCircleQuestion,
   PenLine,
+  Phone,
   Plus,
   RefreshCw,
   Search,
@@ -5456,8 +5457,8 @@ function BlogIndexEstimator({ showToast }) {
 }
 
 function LoginScreen({ onLogin }) {
-  const [email, setEmail] = useState('owner@mabu.kr')
   const [name, setName] = useState('마부 운영자')
+  const [phone, setPhone] = useState('010-0000-0000')
   const [loginMessage, setLoginMessage] = useState('')
   const [kakaoStatus, setKakaoStatus] = useState({ checked: false, configured: false })
   const [isKakaoLoading, setIsKakaoLoading] = useState(false)
@@ -5505,7 +5506,14 @@ function LoginScreen({ onLogin }) {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    onLogin({ email, name, plan: 'Starter' })
+    onLogin({
+      id: `phone:${phone.replace(/\D/g, '') || Date.now()}`,
+      provider: 'phone',
+      phone,
+      name,
+      plan: 'Phone',
+      loggedInAt: new Date().toISOString(),
+    })
   }
 
   const handleKakaoLogin = () => {
@@ -5533,41 +5541,60 @@ function LoginScreen({ onLogin }) {
         <span className="eyebrow">간편 시작</span>
         <h2>워크스페이스 로그인</h2>
         {loginMessage && <p className="login-message">{loginMessage}</p>}
-        <button
-          className="kakao-login-button"
-          type="button"
-          onClick={handleKakaoLogin}
-          disabled={isKakaoLoading || (kakaoStatus.checked && !kakaoStatus.configured)}
-        >
-          {isKakaoLoading ? '카카오 로그인으로 이동 중...' : '카카오톡으로 로그인'}
-        </button>
-        <p className={`kakao-status ${kakaoStatus.configured ? 'is-ready' : ''}`}>
-          {kakaoStatus.checked
-            ? kakaoStatus.configured
-              ? '카카오 API 연결됨'
-              : '카카오 API 키가 아직 연결되지 않았습니다.'
-            : '카카오 연결 상태 확인 중'}
-        </p>
+        <section className="login-method kakao-method" aria-label="카카오 로그인">
+          <div className="login-method-heading">
+            <span>카카오 간편 로그인</span>
+            <em>추천</em>
+          </div>
+          <button
+            className="kakao-login-button"
+            type="button"
+            onClick={handleKakaoLogin}
+            disabled={isKakaoLoading || (kakaoStatus.checked && !kakaoStatus.configured)}
+          >
+            {isKakaoLoading ? '카카오 로그인으로 이동 중...' : '카카오톡으로 로그인'}
+          </button>
+          <p className={`kakao-status ${kakaoStatus.configured ? 'is-ready' : ''}`}>
+            {kakaoStatus.checked
+              ? kakaoStatus.configured
+                ? '카카오 계정으로 바로 로그인합니다.'
+                : '카카오 API 키가 아직 연결되지 않았습니다.'
+              : '카카오 연결 상태 확인 중'}
+          </p>
+        </section>
         <div className="login-divider">
-          <span>또는</span>
+          <span>다른 방법</span>
         </div>
-        <label>
-          <span>이름</span>
-          <div className="input-shell">
-            <Store size={18} />
-            <input value={name} onChange={(event) => setName(event.target.value)} required />
+        <section className="login-method phone-method" aria-label="휴대폰 번호 로그인">
+          <div className="login-method-heading">
+            <span>휴대폰 번호 로그인</span>
+            <em>로컬 계정</em>
           </div>
-        </label>
-        <label>
-          <span>이메일</span>
-          <div className="input-shell">
-            <Link2 size={18} />
-            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-          </div>
-        </label>
+          <label>
+            <span>이름</span>
+            <div className="input-shell">
+              <Store size={18} />
+              <input value={name} onChange={(event) => setName(event.target.value)} required />
+            </div>
+          </label>
+          <label>
+            <span>휴대폰 번호</span>
+            <div className="input-shell">
+              <Phone size={18} />
+              <input
+                type="tel"
+                inputMode="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="010-0000-0000"
+                required
+              />
+            </div>
+          </label>
+        </section>
         <button className="analyze-button" type="submit">
           <Sparkles size={18} />
-          대시보드 열기
+          휴대폰 번호로 시작
         </button>
       </form>
     </main>
